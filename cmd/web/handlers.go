@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -89,5 +90,66 @@ func (app *Application) showItem(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+}
+func (app *Application) updateItem(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Error parsing form data", http.StatusBadRequest)
+		return
+	}
+	idStr := r.Form.Get("id")
+	name := r.Form.Get("iname")
+	item_type := r.Form.Get("titem")
+	priceStr := r.Form.Get("price")
+	imgurl := r.Form.Get("img")
+	quantityStr := r.Form.Get("qu")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("Converted value:", id)
+	}
+	price, err := strconv.Atoi(priceStr)
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("Converted value:", price)
+	}
+	quantity, err := strconv.Atoi(quantityStr)
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("Converted value:", quantity)
+	}
+	err = app.ItemModel.Update(app.DB, name, item_type, imgurl, id, price, quantity)
+	if err != nil {
+		http.Error(w, "db error update", http.StatusBadRequest)
+	}
+	http.Redirect(w, r, "/items", http.StatusSeeOther)
+}
+func (app *Application) deleteItem(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		return
+	}
+	idStr := r.Form.Get("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		fmt.Println("Error", err)
+	} else {
+		fmt.Println("Converted value:", id)
+	}
+	err = app.ItemModel.Delete(app.DB, id)
+	if err != nil {
+		http.Error(w, "db delete error", http.StatusBadRequest)
+	}
+	http.Redirect(w, r, "/items", http.StatusSeeOther)
 
 }

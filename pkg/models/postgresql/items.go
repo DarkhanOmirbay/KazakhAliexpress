@@ -52,3 +52,19 @@ func (m *ItemModel) GetItem(db *sql.DB, id int) (*models.Item, error) {
 
 	return item, nil
 }
+func (m *ItemModel) Update(db *sql.DB, name, type_item, imgurl string, id, price, quantity int) error {
+	stmt := "UPDATE items SET name =$1, type_item = $2, price = $3, img_url = $4, quantity = $5 WHERE id = $6"
+	_, err := db.Exec(stmt, name, type_item, price, imgurl, quantity, id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return err
+}
+func (m *ItemModel) Delete(db *sql.DB, id int) error {
+	stmt := "DELETE FROM items where id=$1"
+	_, err := db.Exec(stmt, id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return err
+}
