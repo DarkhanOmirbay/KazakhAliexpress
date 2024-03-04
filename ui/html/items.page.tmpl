@@ -1,20 +1,16 @@
-<!DOCTYPE html>
-<html>
-<head>
-</head>
+{{template "base" .}}
 
-<body>
+{{define "title"}}Items{{end}}
+
+{{define "main"}}
 {{range .}}
- <div>
-            <p>ID: {{.Id}}</p>
+        <div>
+            <a href="/items/{{.Id}}">ID: {{.Id}}</a>
             <p>Name: {{.Name}}</p>
             <p>Type: {{.TypeItem}}</p>
             <p>Price: {{.Price}}</p>
             <img src="{{.ImgUrl}}" alt="Description">
             <p>Quantity: {{.Quantity}}</p>
         </div>
-
-
 {{end}}
-</body>
-</html>
+{{end}}

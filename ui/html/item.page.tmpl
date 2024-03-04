@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-</head>
+{{template "base" .}}
 
-<body>
+{{define "title"}}Item {{.Id}}{{end}}
+
+{{define "main"}}
  <div>
 
         <form action="/items/update" method='POST'>
@@ -42,8 +41,4 @@
            <input type="submit" value="Delete">
            </form>
         </div>
-
-
-
-</body>
-</html>
+{{end}}

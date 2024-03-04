@@ -3,6 +3,7 @@ package postgresql
 import (
 	"KazakhAliexpress/SE2220/pkg/models"
 	"database/sql"
+	"errors"
 	"log"
 )
 
@@ -10,17 +11,17 @@ type ItemModel struct {
 	DB *sql.DB
 }
 
-func (m *ItemModel) Insert(db *sql.DB, name, type_item, imgurl string, price, quantity int) {
+func (m *ItemModel) Insert(name, type_item, imgurl string, price, quantity int) {
 	stmt := "INSERT INTO items(name, type_item, price, img_url, quantity) values($1,$2,$3,$4,$5)"
-	res, err := db.Exec(stmt, name, type_item, price, imgurl, quantity)
+	res, err := m.DB.Exec(stmt, name, type_item, price, imgurl, quantity)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println(res)
 }
-func (m *ItemModel) Read(db *sql.DB) ([]*models.Item, error) {
+func (m *ItemModel) Read() ([]*models.Item, error) {
 	stmt := "SELECT * FROM items"
-	rows, err := db.Query(stmt)
+	rows, err := m.DB.Query(stmt)
 	if err != nil {
 		return nil, err
 	}
@@ -40,29 +41,37 @@ func (m *ItemModel) Read(db *sql.DB) ([]*models.Item, error) {
 	}
 	return items, nil
 }
-func (m *ItemModel) GetItem(db *sql.DB, id int) (*models.Item, error) {
+func (m *ItemModel) GetItem(id int) (*models.Item, error) {
 	stmt := "SELECT * from items WHERE id=$1"
 
-	row := db.QueryRow(stmt, id)
+	row := m.DB.QueryRow(stmt, id)
 	item := &models.Item{}
 	err := row.Scan(&item.Id, &item.Name, &item.TypeItem, &item.Price, &item.ImgUrl, &item.Quantity)
 	if err != nil {
-		return nil, err
+		// If the query returns no rows, then row.Scan() will return a
+		// sql.ErrNoRows error. We use the errors.Is() function check for that
+		// error specifically, and return our own models.ErrNoRecord error
+		// instead.
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrNoRecord
+		} else {
+			return nil, err
+		}
 	}
 
 	return item, nil
 }
-func (m *ItemModel) Update(db *sql.DB, name, type_item, imgurl string, id, price, quantity int) error {
+func (m *ItemModel) Update(name, type_item, imgurl string, id, price, quantity int) error {
 	stmt := "UPDATE items SET name =$1, type_item = $2, price = $3, img_url = $4, quantity = $5 WHERE id = $6"
-	_, err := db.Exec(stmt, name, type_item, price, imgurl, quantity, id)
+	_, err := m.DB.Exec(stmt, name, type_item, price, imgurl, quantity, id)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return err
 }
-func (m *ItemModel) Delete(db *sql.DB, id int) error {
+func (m *ItemModel) Delete(id int) error {
 	stmt := "DELETE FROM items where id=$1"
-	_, err := db.Exec(stmt, id)
+	_, err := m.DB.Exec(stmt, id)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Kazakh Aliexpress</title>
-</head>
-<body>
-    <h1>Hello</h1>
+{{template "base" .}}
+
+{{define "title"}}Home{{end}}
+
+{{define "main"}}
     <form action="/create" method='POST'>
     <div>
      <label for="iname">Item name </label>
@@ -30,5 +28,4 @@
      <input type="submit" value="Submit">
      <div>
     </form>
-</body>
-</html>
+{{end}}

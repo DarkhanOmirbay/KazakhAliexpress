@@ -1,27 +1,34 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"strconv"
 )
 
-func (app *Application) home(w http.ResponseWriter, r *http.Request) {
-	ts, err := template.ParseFiles("./ui/html/home.page.tmpl")
+func (app *application) home(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+	files := []string{
+		"./ui/html/home.page.tmpl",
+		"./ui/html/base.layout.tmpl",
+		"./ui/html/footer.partial.tmpl",
+	}
+
+	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "HTML ERROR", 500)
+		app.serverError(w, err)
 		return
 	}
 	ts.Execute(w, nil)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal Server Error", 500)
+		app.serverError(w, err)
 	}
 }
-func (app *Application) createItem(w http.ResponseWriter, r *http.Request) {
+func (app *application) createItem(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
@@ -29,7 +36,7 @@ func (app *Application) createItem(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "Error parsing form data", http.StatusBadRequest)
+		app.serverError(w, err)
 		return
 	}
 
@@ -41,48 +48,61 @@ func (app *Application) createItem(w http.ResponseWriter, r *http.Request) {
 
 	price, err := strconv.Atoi(priceStr)
 	if err != nil {
-		http.Error(w, "Error converting price to integer", http.StatusBadRequest)
+		app.serverError(w, err)
 		return
 	}
 
 	quantity, err := strconv.Atoi(quantityStr)
 	if err != nil {
-		http.Error(w, "Error converting quantity to integer", http.StatusBadRequest)
+		app.serverError(w, err)
 		return
 	}
 
-	app.ItemModel.Insert(app.DB, name, item_type, imgurl, price, quantity)
+	app.items.Insert(name, item_type, imgurl, price, quantity)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
-func (app *Application) showItems(w http.ResponseWriter, r *http.Request) {
-	items, err := app.ItemModel.Read(app.DB)
+func (app *application) showItems(w http.ResponseWriter, r *http.Request) {
+	items, err := app.items.Read()
 	if err != nil {
-		http.Error(w, "Error reading items from the database", http.StatusInternalServerError)
+		app.serverError(w, err)
 		return
 	}
 
-	ts, err := template.ParseFiles("./ui/html/items.page.tmpl")
+	files := []string{
+		"./ui/html/items.page.tmpl",
+		"./ui/html/base.layout.tmpl",
+		"./ui/html/footer.partial.tmpl",
+	}
+
+	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		http.Error(w, "Error parsing HTML template", http.StatusInternalServerError)
+		app.serverError(w, err)
 		return
 	}
 
 	err = ts.Execute(w, items)
 	if err != nil {
-		http.Error(w, "Error executing HTML template", http.StatusInternalServerError)
+		app.serverError(w, err)
 		return
 	}
 }
-func (app *Application) showItem(w http.ResponseWriter, r *http.Request) {
+func (app *application) showItem(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil || id < 1 {
-		log.Fatal(err)
+		app.serverError(w, err)
+		return
 	}
-	i, err := app.ItemModel.GetItem(app.DB, id)
+	i, err := app.items.GetItem(id)
 	if err != nil {
 		log.Fatal(err)
 	}
-	ts, err := template.ParseFiles("./ui/html/item.page.tmpl")
+	files := []string{
+		"./ui/html/item.page.tmpl",
+		"./ui/html/base.layout.tmpl",
+		"./ui/html/footer.partial.tmpl",
+	}
+
+	ts, err := template.ParseFiles(files...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,14 +112,14 @@ func (app *Application) showItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
-func (app *Application) updateItem(w http.ResponseWriter, r *http.Request) {
+func (app *application) updateItem(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "Error parsing form data", http.StatusBadRequest)
+		app.serverError(w, err)
 		return
 	}
 	idStr := r.Form.Get("id")
@@ -111,44 +131,44 @@ func (app *Application) updateItem(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		fmt.Println("Error:", err)
+		app.errorlog.Println("Error:", err)
 	} else {
-		fmt.Println("Converted value:", id)
+		app.errorlog.Println("Converted value:", id)
 	}
 	price, err := strconv.Atoi(priceStr)
 	if err != nil {
-		fmt.Println("Error:", err)
+		app.errorlog.Println("Error:", err)
 	} else {
-		fmt.Println("Converted value:", price)
+		app.errorlog.Println("Converted value:", price)
 	}
 	quantity, err := strconv.Atoi(quantityStr)
 	if err != nil {
-		fmt.Println("Error:", err)
+		app.errorlog.Println("Error:", err)
 	} else {
-		fmt.Println("Converted value:", quantity)
+		app.errorlog.Println("Converted value:", quantity)
 	}
-	err = app.ItemModel.Update(app.DB, name, item_type, imgurl, id, price, quantity)
+	err = app.items.Update(name, item_type, imgurl, id, price, quantity)
 	if err != nil {
 		http.Error(w, "db error update", http.StatusBadRequest)
 	}
 	http.Redirect(w, r, "/items", http.StatusSeeOther)
 }
-func (app *Application) deleteItem(w http.ResponseWriter, r *http.Request) {
+func (app *application) deleteItem(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		app.serverError(w, err)
 		return
 	}
 	idStr := r.Form.Get("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		fmt.Println("Error", err)
+		app.errorlog.Println("Error", err)
 	} else {
-		fmt.Println("Converted value:", id)
+		app.errorlog.Println("Converted value:", id)
 	}
-	err = app.ItemModel.Delete(app.DB, id)
+	err = app.items.Delete(id)
 	if err != nil {
-		http.Error(w, "db delete error", http.StatusBadRequest)
+		app.serverError(w, err)
 	}
 	http.Redirect(w, r, "/items", http.StatusSeeOther)
 
