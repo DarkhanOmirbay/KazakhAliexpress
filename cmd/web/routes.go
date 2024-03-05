@@ -2,21 +2,25 @@ package main
 
 import (
 	"github.com/bmizerany/pat"
+	"github.com/justinas/alice"
 	"net/http"
 )
 
 func (app *application) routes() http.Handler {
-	mux := pat.New()
-	mux.Get("/", http.HandlerFunc(app.home))
-	mux.Post("/create", http.HandlerFunc(app.createItem))
+	standardMiddleware := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
+	dynamicMiddleware := alice.New(app.session.Enable)
 
-	mux.Get("/items", http.HandlerFunc(app.showItems))
-	mux.Get("/items/:id", http.HandlerFunc(app.showItem))
-	mux.Post("/items/update", http.HandlerFunc(app.updateItem))
-	mux.Post("/items/delete", http.HandlerFunc(app.deleteItem))
+	mux := pat.New()
+	mux.Get("/", dynamicMiddleware.ThenFunc(app.home))
+	mux.Post("/create", dynamicMiddleware.ThenFunc(app.createItem))
+
+	mux.Get("/items", dynamicMiddleware.ThenFunc(app.showItems))
+	mux.Get("/items/:id", dynamicMiddleware.ThenFunc(app.showItem))
+	mux.Post("/items/update", dynamicMiddleware.ThenFunc(app.updateItem))
+	mux.Post("/items/delete", dynamicMiddleware.ThenFunc(app.deleteItem))
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 	mux.Get("/static/", http.StripPrefix("/static", fileServer))
 
-	return mux
+	return standardMiddleware.Then(mux)
 }

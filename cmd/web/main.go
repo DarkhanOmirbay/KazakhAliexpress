@@ -4,20 +4,26 @@ import (
 	"KazakhAliexpress/SE2220/pkg/models/postgresql"
 	"database/sql"
 	"flag"
+	"github.com/golangcollege/sessions"
 	_ "github.com/lib/pq"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 type application struct {
-	errorlog *log.Logger
-	infolog  *log.Logger
-	items    *postgresql.ItemModel
+	errorlog      *log.Logger
+	infolog       *log.Logger
+	items         *postgresql.ItemModel
+	templateCache map[string]*template.Template
+	session       *sessions.Session
 }
 
 func main() {
 	addr := flag.String("addr", ":4000", "HTTP network address")
+	secret := flag.String("secret", "s6Ndh+pPbnzHbS*+9Pk8qGWhTzbpa@ge", "Secret key")
 	flag.Parse()
 
 	// info log
@@ -30,17 +36,30 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	templateCache, err := newTemplateCache("./ui/html/")
+	if err != nil {
+		errorlog.Fatal(err)
+	}
+	session := sessions.New([]byte(*secret))
+	session.Lifetime = 12 * time.Hour
+
 	app := &application{
-		errorlog: errorlog,
-		infolog:  infolog,
-		items:    &postgresql.ItemModel{DB: db},
+		errorlog:      errorlog,
+		infolog:       infolog,
+		items:         &postgresql.ItemModel{DB: db},
+		templateCache: templateCache,
+		session:       session,
 	}
 	server := http.Server{
-		Addr:     *addr,
-		Handler:  app.routes(),
-		ErrorLog: errorlog,
+		Addr:         *addr,
+		Handler:      app.routes(),
+		ErrorLog:     errorlog,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 	err = server.ListenAndServe()
+	//err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	infolog.Printf("Starting server on %s", *addr)
 	errorlog.Fatal(err)
 }

@@ -3,7 +3,8 @@
 {{define "title"}}Items{{end}}
 
 {{define "main"}}
-{{range .}}
+{{if .Items}}
+{{range .Items}}
         <div>
             <a href="/items/{{.Id}}">ID: {{.Id}}</a>
             <p>Name: {{.Name}}</p>
@@ -13,4 +14,8 @@
             <p>Quantity: {{.Quantity}}</p>
         </div>
 {{end}}
+{{else}}
+    <p>There's nothing to see here... yet!</p>
+{{end}}
+
 {{end}}

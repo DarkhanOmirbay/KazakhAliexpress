@@ -1,10 +1,10 @@
 {{template "base" .}}
 
-{{define "title"}}Item {{.Id}}{{end}}
+{{define "title"}}Item {{.Item.Id}}{{end}}
 
 {{define "main"}}
  <div>
-
+{{with .Item}}
         <form action="/items/update" method='POST'>
            <div>
            <label for="id"></label>
@@ -27,6 +27,7 @@
             <input type="text" id="img" name="img" value="{{.ImgUrl}}">
             </div>
             <div>
+
         <label for="qu">Quantity </label>
             <input type="text" id="qu" name="qu" value="{{.Quantity}}">
             </div>
@@ -41,4 +42,5 @@
            <input type="submit" value="Delete">
            </form>
         </div>
+        {{end}}
 {{end}}
