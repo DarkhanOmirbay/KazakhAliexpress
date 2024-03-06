@@ -1,6 +1,6 @@
 {{template "base" .}}
 
-{{define "title"}}Items{{end}}
+{{define "title"}}Cart{{end}}
 
 {{define "main"}}
 <style>
@@ -22,7 +22,7 @@
        height: auto; /* Maintain the image's aspect ratio */
    }
 </style>
-
+<h1>My choosed items in cart</h1>
 <div class="product-container">
     {{if .Items}}
         {{range .Items}}
@@ -32,9 +32,16 @@
                 <h1>Name:{{.Name}}</h1>
                 <p class="price">Price:{{.Price}}</p>
                 <p>type:{{.TypeItem}},quantity:{{.Quantity}}</p>
-
+                <form action="/cart/delete" method='POST'>
+                    <input type="hidden" id="ItemId" name="ItemId" value="{{.Id}}">
+                    <input type="submit" value="Delete from cart">
+                </form>
             </div>
         {{end}}
+
+        <form action="/cart/buy" method="GET">
+            <input type="submit" value="Buy">
+        </form>
     {{else}}
         <p>There's nothing to see here... yet!</p>
     {{end}}

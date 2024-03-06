@@ -3,42 +3,43 @@
 {{define "title"}}Home{{end}}
 
 {{define "main"}}
-    <form action="/create" method='POST'>
-    <div>
-     <label for="iname">Item name </label>
-     {{with .FormErrors.name}}
-     <label class='error'>{{.}}</label>
-     {{end}}
-     <input type="text" id="iname" name="iname" value='{{.FormData.Get "name"}}'>
-     </div>
-     <div>
-      <label for="titem">Item type </label>
-      {{with .FormErrors.item_type}}
-      <label class='error'>{{.}}</label>
-      {{end}}
+<style>
+   .product-container {
+       display: flex;
+       flex-wrap: wrap;
+       justify-content: space-between;
+   }
 
-          <input type="text" id="titem" name="titem" value='{{.FormData.Get "titem"}}'>
-      </div>
-      <div>
- <label for="price">Price </label>
- {{with .FormErrors.priceStr}}
- <label class='error'>{{.}}</label>
- {{end}}
-<input type="text" id="price" name="price" value='{{.FormData.Get "price"}}'>
-     </div>
-     <div>
- <label for="img">Img url </label>
-     <input type="text" id="img" name="img" value='{{.FormData.Get "img"}}'>
-     </div>
-     <div>
- <label for="qu">Quantity </label>
- {{with .FormErrors.quantityStr}}
- <label class='error'>{{.}}</label>
- {{end}}
-<input type="text" id="qu" name="qu" value='{{.FormData.Get "qu"}}'>
-     </div>
-     <div>
-     <input type="submit" value="Submit">
-     <div>
-    </form>
+   .card {
+       box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+       width: calc(33.33% - 20px);
+       margin-bottom: 20px;
+   }
+
+   .card img {
+       width: 50%;
+       max-width: 50%; /* Ensure the image doesn't exceed its natural size */
+       height: auto; /* Maintain the image's aspect ratio */
+   }
+</style>
+
+<div class="product-container">
+    {{if .Items}}
+        {{range .Items}}
+            <div class="card">
+                <img src="{{.ImgUrl}}" style="width:100%">
+                <a href="/items/{{.Id}}">ID: {{.Id}}</a>
+                <h1>Name:{{.Name}}</h1>
+                <p class="price">Price:{{.Price}}</p>
+                <p>type:{{.TypeItem}},quantity:{{.Quantity}}</p>
+                <form action="/cart/add" method='POST'>
+            <input type="hidden" id="ItemId" name="ItemId" value="{{.Id}}">
+                           <input type="submit" value="add to cart">
+              </form>
+            </div>
+        {{end}}
+    {{else}}
+        <p>There's nothing to see here... yet!</p>
+    {{end}}
+</div>
 {{end}}

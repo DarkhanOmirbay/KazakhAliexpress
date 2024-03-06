@@ -48,10 +48,7 @@ func (m *ItemModel) GetItem(id int) (*models.Item, error) {
 	item := &models.Item{}
 	err := row.Scan(&item.Id, &item.Name, &item.TypeItem, &item.Price, &item.ImgUrl, &item.Quantity)
 	if err != nil {
-		// If the query returns no rows, then row.Scan() will return a
-		// sql.ErrNoRows error. We use the errors.Is() function check for that
-		// error specifically, and return our own models.ErrNoRecord error
-		// instead.
+
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, models.ErrNoRecord
 		} else {

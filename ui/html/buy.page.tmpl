@@ -1,0 +1,68 @@
+{{template "base" .}}
+
+{{define "title"}}Buy Items{{end}}
+
+{{define "main"}}
+<style>
+   .product-container {
+       display: flex;
+       flex-wrap: wrap;
+       justify-content: space-between;
+   }
+
+   .card {
+       box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+       width: calc(33.33% - 20px);
+       margin-bottom: 20px;
+   }
+
+   .form-container {
+       margin-top: 20px;
+   }
+
+   .form-container input {
+       margin-bottom: 10px;
+   }
+
+</style>
+<h1>My Choosed Items in Cart</h1>
+<div class="product-container">
+    {{if .Items}}
+        {{range .Items}}
+            <div class="card">
+                <img src="{{.ImgUrl}}" style="width:100%">
+                <a href="/items/{{.Id}}">ID: {{.Id}}</a>
+                <h1>Name: {{.Name}}</h1>
+                <p class="price">Price: {{.Price}}</p>
+                <p>Type: {{.TypeItem}}, Quantity: {{.Quantity}}</p>
+                <form action="/cart/delete" method='POST'>
+                    <input type="hidden" id="ItemId" name="ItemId" value="{{.Id}}">
+                    <input type="submit" value="Delete from cart">
+                </form>
+            </div>
+        {{end}}
+    {{else}}
+        <p>There's nothing to see here... yet!</p>
+    {{end}}
+</div>
+
+<div class="form-container">
+    <h2>Enter Shipping Information and Card Details</h2>
+    <form action="/cart/buy" method="POST">
+        <label for="address">Shipping Address:</label>
+        <input type="text" id="address" name="address" required>
+
+        <label for="cardNumber">Card Number:</label>
+        <input type="text" id="cardNumber" name="cardNumber" required>
+
+        <label for="expirationDate">Expiration Date:</label>
+        <input type="text" id="expirationDate" name="expirationDate" placeholder="MM/YY" required>
+
+        <label for="cvv">CVV:</label>
+        <input type="text" id="cvv" name="cvv" required>
+
+        <input type="submit" value="Buy Now">
+
+    </form>
+</div>
+{{end}}

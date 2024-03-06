@@ -13,24 +13,18 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	//files := []string{
-	//	"./ui/html/home.page.tmpl",
-	//	"./ui/html/base.layout.tmpl",
-	//	"./ui/html/footer.partial.tmpl",
-	//}
-	//
-	//ts, err := template.ParseFiles(files...)
-	//if err != nil {
-	//	app.serverError(w, err)
-	//	return
-	//}
-	//ts.Execute(w, nil)
-	//if err != nil {
-	//	app.serverError(w, err)
-	//}
-	app.render(w, r, "home.page.tmpl", &templateData{
-		Items: nil,
-	})
+	items, err := app.items.Read()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	data := &templateData{Items: items}
+
+	app.render(w, r, "home.page.tmpl", data)
+}
+func (app *application) createItemForm(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "create.page.tmpl", &templateData{})
 }
 func (app *application) createItem(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -82,7 +76,7 @@ func (app *application) createItem(w http.ResponseWriter, r *http.Request) {
 		errors["quantityStr"] = "This field is invalid"
 	}
 	if len(errors) > 0 {
-		app.render(w, r, "home.page.tmpl", &templateData{
+		app.render(w, r, "create.page.tmpl", &templateData{
 			FormErrors: errors,
 			FormData:   r.PostForm,
 		})
@@ -102,24 +96,6 @@ func (app *application) showItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//files := []string{
-	//	"./ui/html/items.page.tmpl",
-	//	"./ui/html/base.layout.tmpl",
-	//	"./ui/html/footer.partial.tmpl",
-	//}
-	//
-	//ts, err := template.ParseFiles(files...)
-	//if err != nil {
-	//	app.serverError(w, err)
-	//	return
-	//}
-	//
-	//err = ts.Execute(w, data)
-	//if err != nil {
-	//	app.serverError(w, err)
-	//	return
-	//}
-
 	data := &templateData{Items: items}
 	app.render(w, r, "items.page.tmpl", data)
 }
@@ -134,20 +110,7 @@ func (app *application) showItem(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	data := &templateData{Item: i}
-	//files := []string{
-	//	"./ui/html/item.page.tmpl",
-	//	"./ui/html/base.layout.tmpl",
-	//	"./ui/html/footer.partial.tmpl",
-	//}
-	//
-	//ts, err := template.ParseFiles(files...)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//err = ts.Execute(w, data)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+
 	app.render(w, r, "item.page.tmpl", data)
 
 }
@@ -205,6 +168,7 @@ func (app *application) updateItem(w http.ResponseWriter, r *http.Request) {
 	} else {
 		app.errorlog.Println("Converted value:", id)
 	}
+
 	if len(errors) > 0 {
 		app.render(w, r, "item.page.tmpl", &templateData{
 			FormErrors: errors,

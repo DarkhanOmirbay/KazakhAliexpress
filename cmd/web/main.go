@@ -19,6 +19,9 @@ type application struct {
 	items         *postgresql.ItemModel
 	templateCache map[string]*template.Template
 	session       *sessions.Session
+	users         *postgresql.UserModel
+	carts         *postgresql.CartModel
+	orders        *postgresql.OrderModel
 }
 
 func main() {
@@ -26,9 +29,8 @@ func main() {
 	secret := flag.String("secret", "s6Ndh+pPbnzHbS*+9Pk8qGWhTzbpa@ge", "Secret key")
 	flag.Parse()
 
-	// info log
 	infolog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	// err log
+
 	errorlog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	connstring := "user=postgres dbname=KazakhAliexpress password='703905' host=localhost port=5432 sslmode=disable"
@@ -42,6 +44,8 @@ func main() {
 	}
 	session := sessions.New([]byte(*secret))
 	session.Lifetime = 12 * time.Hour
+	session.Secure = true
+	session.SameSite = http.SameSiteStrictMode
 
 	app := &application{
 		errorlog:      errorlog,
@@ -49,6 +53,9 @@ func main() {
 		items:         &postgresql.ItemModel{DB: db},
 		templateCache: templateCache,
 		session:       session,
+		users:         &postgresql.UserModel{DB: db},
+		carts:         &postgresql.CartModel{DB: db},
+		orders:        &postgresql.OrderModel{DB: db},
 	}
 	server := http.Server{
 		Addr:         *addr,

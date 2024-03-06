@@ -9,13 +9,19 @@ import (
 )
 
 type templateData struct {
-	Items       []*models.Item
-	Item        *models.Item
-	CurrentYear int
-	FormData    url.Values
-	FormErrors  map[string]string
-	Form        *forms.Form
-	Flash       string
+	Items           []*models.Item
+	Item            *models.Item
+	CurrentYear     int
+	FormData        url.Values
+	FormErrors      map[string]string
+	Form            *forms.Form
+	Flash           string
+	IsAuthenticated bool
+	CSRFToken       string
+	Cart            *models.Cart
+	Carts           []*models.Cart
+	Orders          []*models.Order
+	Order           *models.Order
 }
 
 func newTemplateCache(dir string) (map[string]*template.Template, error) {
@@ -36,15 +42,12 @@ func newTemplateCache(dir string) (map[string]*template.Template, error) {
 		if err != nil {
 			return nil, err
 		}
-		// Use the ParseGlob method to add any 'partial' templates to the
-		// template set (in our case, it's just the 'footer' partial at the
-		// moment).
+
 		ts, err = ts.ParseGlob(filepath.Join(dir, "*.partial.tmpl"))
 		if err != nil {
 			return nil, err
 		}
-		// Add the template set to the cache, using the name of the page
-		// (like 'home.page.tmpl') as the key.
+
 		cache[name] = ts
 	}
 	return cache, nil
